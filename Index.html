@@ -1,0 +1,606 @@
+<html> 
+<meta charset="utf-8"> 
+<style> 
+copyright { font: 11px Verdana; color: Olivedrab; } 
+body { font: 10px calibri; fill: lightcyan; background-color: black } 
+.axis path, .axis line { fill: none; stroke: #000; shape-rendering: crispEdges; } 
+.bar:hover { fill: orangered; } 
+.arc text { font: 10px sans-serif; text-anchor: middle; }  
+.arc path { stroke: #fff; } 
+.slice text { font-family: sans-serif; } 
+  #chart {    max-width: 250px;}
+  text {font-family: "Verdana", sans-serif;}
+</style> 
+<body> 
+<copyright> &nbsp &nbsp &nbsp &copy; 2019 risk.lexisnexis.com &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp
+Feedback/Suggestions/Report Broken &nbsp<a href="mailto:abinay.sadhula@lexisnexisrisk.com?subject=Feedback/Suggestions/Report Broken" style="color: Chocolate">Contact@InteractiveAI</a> </copyright > 
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<div id="graph0" class="aGraph" style="position:absolute;top:25px; float:middle;"></div> 
+<div id="graph1" class="aGraph" style="background-color:lightblue;position:absolute;top:75px;left:45px; float:right;"></div>
+<!---<div id="graph2" class="aGraph" style="background-color:darkgrey;position:absolute;top:75px;left:375px; float:right;"></div>-->
+<div id="graph2" class="aGraph" style="background-color:;position:absolute;top:75px;left:375px;float:right;"></div>
+<div id="graph3" class="aGraph" style="background-color:lightblue;position:absolute;top:75px;left:875px;float:right;"></div>
+<div id="graph4" class="aGraph" style="background-color:lightblue;position:absolute;top:275px;left:45px;float:right;"></div>
+<div id="graph5" class="aGraph" style="background-color:lightblue;position:absolute;top:360px;left:375px;float:right;"></div>
+<div id="graph6" class="aGraph" style="background-color:lightblue;position:absolute;top:275px;left:875px;float:right;"></div>
+</body>
+<script> var graph0 = d3.select("#graph0").append("svg").attr("width", 1200).attr("height", 40).append("g");
+        graph0.append("text").attr("transform", "translate(" + 520 + " ," + 20 + ")").style("text-anchor", "middle").text("Interactive AI").style("font-size", "20px").style("font-family", "verdana").style("font-weight", "bold").style("fill", "IndianRed");
+		 graph0.append("text").attr("transform", "translate(" + 520 + " ," + 35 + ")").style("text-anchor", "middle").text("Real Time Analytics").style("font-size", "13px").style("font-family", "verdana").style("font-weight", "bold").style("fill", "IndianRed");
+        var t = "d";
+        var c = "All";
+        var drawcolor = ["#8c564b", "#8c564b", "#a55194", "#ff9896", "#17becf", "#5254a3", "#bcbd22"];
+        var ci = drawcolor[1];
+        var margin = {
+                top: 30,
+                right: 10,
+                bottom: 30,
+                left: 20
+            },
+            width = 450 - margin.left - margin.right,
+            height = 150 - margin.top - margin.bottom;
+        var x = d3.scaleBand().rangeRound([0, width]).padding(0.7);
+        var y = d3.scaleLinear().range([height, 0]);
+        var xAxis = d3.axisBottom(x);
+        var yAxis = d3.axisLeft(y).tickFormat(d3.format("s"));
+        var barmargin = {top: 50,right: 20,bottom: 50,left: 150},
+            barwidth = 450 - barmargin.left - barmargin.right,
+            barheight = 150 - barmargin.top - barmargin.bottom;
+        var xscale = d3.scaleLinear().range([0, barwidth]);
+        var yscale = d3.scaleBand().rangeRound([barheight, 0]).padding(0.5);
+        var yscaleAxis = d3.axisLeft(yscale).tickSize(0);
+		//Create a Gauge for Total Interactions
+		function gaugeChart() {
+  //var margin = {top: 0, right: 65, bottom: 10, left: 65},
+       // width = 250,
+     // height = 150,
+  var margin = {top: 30, right: 10,
+                bottom: 30,
+                left: 20
+            },
+
+	     width = 450 - margin.left - margin.right,
+         height = 150 - margin.top - margin.bottom;
+      arcMin = -Math.PI/2,
+      arcMax = Math.PI/2,
+      innerRadius = 60,
+      outerRadius = 80,
+      dataDomain = [0, 75, 150],
+      labelPad = 15,
+      dataValue = function(d) { return +d; },
+      colorScale = d3.scaleLinear(),
+      arcScale = d3.scaleLinear(),
+      colorOptions = ["#d7191c", "#efef5d", "#1a9641"],
+      arc = d3.arc();
+
+  function chart(selection) {
+    selection.each(function(data) {
+      // Convert data to standard representation greedily;
+      // this is needed for nondeterministic accessors.
+      data = data.map(function(d, i) { return dataValue(d); });
+      arcScale = d3.scaleLinear().domain(dataDomain).range([arcMin, 0, arcMax]);
+      colorScale = d3.scaleLinear().domain(dataDomain).range(colorOptions);
+      arc = d3.arc().innerRadius(innerRadius)
+        .outerRadius(outerRadius)
+        .startAngle(arcMin);
+
+      // Select the svg element, if it exists.
+      var svg = d3.select(this).selectAll("svg").data([data]);
+
+      // Otherwise, create the skeletal chart.
+      var gEnter = svg.enter().append("svg").append("g");
+      var arcGEnter = gEnter.append("g").attr("class", "arc");
+      arcGEnter.append("path").attr("class", "bg-arc");
+      arcGEnter.append("path").attr("class", "data-arc")
+        .datum({endAngle: arcMin, startAngle: arcMin, score: dataDomain[0]})
+        .attr("d", arc)
+        .style("fill", colorScale(dataDomain[0]))
+        .each(function(d) { this._current = d; });
+      arcGEnter.append("text").attr("class", "arc-label");
+
+
+      arcGEnter.selectAll(".lines").data(arcScale.ticks(5).map(function(d) {
+        return { score: d };
+      })).enter()
+        .append("path")
+          .attr("class", "lines");
+      arcGEnter.selectAll(".ticks").data(arcScale.ticks(5))
+        .enter().append("text")
+          .attr("class", "ticks");
+
+      // Update the outer dimensions.
+      var svg = selection.select("svg");
+      svg.attr("width", width).attr("height", height);
+      // Update the inner dimensions.
+      var g = svg.select("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      var arcG = svg.select("g.arc")
+        .attr("transform", "translate(" +
+          ((width - margin.left - margin.right) / 2) + "," +
+          ((height * (2 / 3)) + ")"));
+
+      svg.select("g.arc .bg-arc")
+        .datum({endAngle: arcMax})
+        .style("fill", "#ddd")
+        .attr("d", arc);
+
+      function arcTween(a) {
+        var i = d3.interpolate(this._current, a);
+        this._current = i(0);
+        return function(t) {
+          return arc(i(t));
+        };
+      }
+
+      var dataArc = svg.select("g.arc .data-arc")
+        .datum({score: data[0], startAngle: arcMin, endAngle: arcScale(data[0])})
+          .transition()
+          .duration(750)
+            .style("fill", function(d) { return colorScale(d.score); })
+            .style("opacity", function(d) { return d.score < dataDomain[0] ? 0 : 1; })
+            .attrTween("d", arcTween);
+
+      var arcBox = svg.select("g.arc .bg-arc").node().getBBox();
+      svg.select("text.arc-label")
+        .datum({score: data[0]})
+        .attr("x", (arcBox.width/2)+arcBox.x)
+        .attr("y", -15)
+        .style("alignment-baseline", "central")
+        .style("text-anchor", "middle")
+        .style("font-size", "15px")
+        .text(function(d) { return ("Interactions:" + d.score); })
+		.style("font-weight", "bold").style("fill", "IndianRed");
+
+      var markerLine = d3.radialLine()
+        .angle(function(d) { return arcScale(d); })
+        .radius(function(d, i) {
+          return innerRadius + ((i % 2) * ((outerRadius - innerRadius)));
+        });
+
+      arcG.selectAll(".lines")
+        .attr("d", function(d) { return markerLine([d.score, d.score]); })
+        .style("fill", "none")
+        .style("stroke-width", 2.5)
+        .style("stroke", "#fff");
+      arcG.selectAll(".ticks")
+        .style("font-size", "12px")
+        .style("text-anchor", "middle")
+        .attr("x", function(d) { return Math.cos(arcScale(d) + arcMin) * (outerRadius + labelPad); })
+        .attr("y", function(d) {
+          var yVal = Math.sin(arcScale(d) + arcMin) * (outerRadius + labelPad);
+          return yVal < -1 ? yVal : -7;
+        }).text(function(d) { return d; });
+    });
+  }
+
+  chart.margin = function(_) {
+    if (!arguments.length) return margin;
+    margin = _;
+    return chart;
+  };
+
+  chart.width = function(_) {
+    if (!arguments.length) return width;
+    width = _;
+    return chart;
+  };
+
+  chart.height = function(_) {
+    if (!arguments.length) return height;
+    height = _;
+    return chart;
+  };
+
+  chart.innerRadius = function(_) {
+    if (!arguments.length) return innerRadius;
+    innerRadius = _;
+    return chart;
+  };
+
+  chart.outerRadius = function(_) {
+    if (!arguments.length) return outerRadius;
+    outerRadius = _;
+    return chart;
+  };
+
+  chart.dataDomain = function(_) {
+    if (!arguments.length) return dataDomain;
+    dataDomain = _;
+    return chart;
+  };
+
+  chart.colorOptions = function(_) {
+    if (!arguments.length) return colorOptions;
+    colorOptions = _;
+    return chart;
+  };
+
+  chart.labelPad = function(_) {
+    if (!arguments.length) return labelPad;
+    labelPad = _;
+    return chart;
+  };
+
+  return chart;
+}
+        
+//Create a Gauge for Total Objects Identified
+		function gaugeChart3() {
+  //var margin = {top: 0, right: 65, bottom: 10, left: 65},
+       // width = 250,
+     // height = 150,
+  var margin = {top: 30, right: 10,
+                bottom: 30,
+                left: 20
+            },
+
+	     width = 450 - margin.left - margin.right,
+         height = 150 - margin.top - margin.bottom;
+      arcMin = -Math.PI/2,
+      arcMax = Math.PI/2,
+      innerRadius = 60,
+      outerRadius = 80,
+      dataDomain3 = [0, 500, 1000],
+      labelPad = 15,
+      dataValue = function(d) { return +d; },
+      colorScale = d3.scaleLinear(),
+      arcScale = d3.scaleLinear(),
+      colorOptions = ["#d7191c", "#efef5d", "#1a9641"],
+      arc = d3.arc();
+
+  function chart(selection) {
+    selection.each(function(data) {
+      // Convert data to standard representation greedily;
+      // this is needed for nondeterministic accessors.
+      data = data.map(function(d, i) { return dataValue(d); });
+      arcScale = d3.scaleLinear().domain(dataDomain3).range([arcMin, 0, arcMax]);
+      colorScale = d3.scaleLinear().domain(dataDomain3).range(colorOptions);
+      arc = d3.arc().innerRadius(innerRadius)
+        .outerRadius(outerRadius)
+        .startAngle(arcMin);
+
+      // Select the svg element, if it exists.
+      var svg = d3.select(this).selectAll("svg").data([data]);
+
+      // Otherwise, create the skeletal chart.
+      var gEnter = svg.enter().append("svg").append("g");
+      var arcGEnter = gEnter.append("g").attr("class", "arc");
+      arcGEnter.append("path").attr("class", "bg-arc");
+      arcGEnter.append("path").attr("class", "data-arc")
+        .datum({endAngle: arcMin, startAngle: arcMin, score: dataDomain3[0]})
+        .attr("d", arc)
+        .style("fill", colorScale(dataDomain3[0]))
+        .each(function(d) { this._current = d; });
+      arcGEnter.append("text").attr("class", "arc-label");
+
+
+      arcGEnter.selectAll(".lines").data(arcScale.ticks(5).map(function(d) {
+        return { score: d };
+      })).enter()
+        .append("path")
+          .attr("class", "lines");
+      arcGEnter.selectAll(".ticks").data(arcScale.ticks(5))
+        .enter().append("text")
+          .attr("class", "ticks");
+
+      // Update the outer dimensions.
+      var svg = selection.select("svg");
+      svg.attr("width", width).attr("height", height);
+      // Update the inner dimensions.
+      var g = svg.select("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      var arcG = svg.select("g.arc")
+        .attr("transform", "translate(" +
+          ((width - margin.left - margin.right) / 2) + "," +
+          ((height * (2 / 3)) + ")"));
+
+      svg.select("g.arc .bg-arc")
+        .datum({endAngle: arcMax})
+        .style("fill", "#ddd")
+        .attr("d", arc);
+
+      function arcTween(a) {
+        var i = d3.interpolate(this._current, a);
+        this._current = i(0);
+        return function(t) {
+          return arc(i(t));
+        };
+      }
+
+      var dataArc = svg.select("g.arc .data-arc")
+        .datum({score: data[0], startAngle: arcMin, endAngle: arcScale(data[0])})
+          .transition()
+          .duration(750)
+            .style("fill", function(d) { return colorScale(d.score); })
+            .style("opacity", function(d) { return d.score < dataDomain3[0] ? 0 : 1; })
+            .attrTween("d", arcTween);
+
+      var arcBox = svg.select("g.arc .bg-arc").node().getBBox();
+      svg.select("text.arc-label")
+        .datum({score: data[0]})
+        .attr("x", (arcBox.width/2)+arcBox.x)
+        .attr("y", -15)
+        .style("alignment-baseline", "central")
+        .style("text-anchor", "middle")
+        .style("font-size", "12px")
+        .text(function(d) { return ("Objects Identified:" + d.score); })
+		.style("font-weight", "bold").style("fill", "IndianRed");
+
+      var markerLine = d3.radialLine()
+        .angle(function(d) { return arcScale(d); })
+        .radius(function(d, i) {
+          return innerRadius + ((i % 2) * ((outerRadius - innerRadius)));
+        });
+
+      arcG.selectAll(".lines")
+        .attr("d", function(d) { return markerLine([d.score, d.score]); })
+        .style("fill", "none")
+        .style("stroke-width", 2.5)
+        .style("stroke", "#fff");
+      arcG.selectAll(".ticks")
+        .style("font-size", "12px")
+        .style("text-anchor", "middle")
+        .attr("x", function(d) { return Math.cos(arcScale(d) + arcMin) * (outerRadius + labelPad); })
+        .attr("y", function(d) {
+          var yVal = Math.sin(arcScale(d) + arcMin) * (outerRadius + labelPad);
+          return yVal < -1 ? yVal : -7;
+        }).text(function(d) { return d; });
+    });
+  }
+
+  chart.margin = function(_) {
+    if (!arguments.length) return margin;
+    margin = _;
+    return chart;
+  };
+
+  chart.width = function(_) {
+    if (!arguments.length) return width;
+    width = _;
+    return chart;
+  };
+
+  chart.height = function(_) {
+    if (!arguments.length) return height;
+    height = _;
+    return chart;
+  };
+
+  chart.innerRadius = function(_) {
+    if (!arguments.length) return innerRadius;
+    innerRadius = _;
+    return chart;
+  };
+
+  chart.outerRadius = function(_) {
+    if (!arguments.length) return outerRadius;
+    outerRadius = _;
+    return chart;
+  };
+
+  chart.dataDomain3 = function(_) {
+    if (!arguments.length) return dataDomain3;
+    dataDomain3 = _;
+    return chart;
+  };
+
+  chart.colorOptions = function(_) {
+    if (!arguments.length) return colorOptions;
+    colorOptions = _;
+    return chart;
+  };
+
+  chart.labelPad = function(_) {
+    if (!arguments.length) return labelPad;
+    labelPad = _;
+    return chart;
+  };
+
+  return chart;
+}
+
+    function randNumberBounds(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min)) + min;
+    }
+
+    (function() {
+      var gauge = gaugeChart()
+        .width(287)
+        .height(180)
+        .innerRadius(60)
+        .outerRadius(80);
+  d3.select("#graph1").datum([randNumberBounds(0, 100)]).call(gauge);
+  
+	 var gauge3 = gaugeChart3()
+        .width(287)
+        .height(180)
+        .innerRadius(60)
+        .outerRadius(80);
+		
+    
+      d3.select("#graph3").datum([randNumberBounds(0, 1000)]).call(gauge3);
+
+      function resize() {
+        var gWidth = Math.min(d3.select("#graph1").node().offsetWidth, 350);
+        gauge.width(gWidth).innerRadius(gWidth / 4).outerRadius((gWidth / 4) + 40);
+        d3.select("#graph1").call(gauge);
+        d3.select("#graph3").call(gauge3);
+      }
+
+      resize();
+      window.addEventListener("resize", resize);
+	  })()
+	  
+      /*  var graph1 = d3.select("#graph1").append("svg").attr("width", width*0.60 + margin.left + margin.right + 5).attr("height", height + margin.top + margin.bottom + 20).append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		  graph1.append("text").attr("transform", "translate(" + 40 + " ," + 100 + ")")
+		  .style("text-anchor", "middle").text("Total Interactions").style("font-size", "10px").style("font-family", "verdana").style("font-weight", "bold").style("fill", "IndianRed");*/
+		  
+		//Pie Chart
+        var graph2 = d3.select("#graph2").append("svg")
+					   .attr("width", width + margin.left + margin.right + 5)
+					   .attr("height", height*2.25 + margin.top + margin.bottom + 20)
+					   .append("image")
+						 .attr("xlink:href", "https://unsplash.it/500/300")
+						 .attr("viewBox","0 0 400 250")
+						 .attr("x", 0)
+						 .attr("y", 0)
+						 .attr("width", 500)
+						 .attr("height", 300)
+					   .append("g")
+					   .attr("transform", "translate(" + (width + margin.left + margin.right + 5)/2 + "," + (height + margin.top + margin.bottom + 20)/2 + ")");
+/*
+    (function() {
+      var gauge3 = gaugeChart()
+        .width(287)
+        .height(180)
+        .innerRadius(60)
+        .outerRadius(80);
+
+      d3.select("#graph3").datum([randNumberBounds(0, 1000)]).call(gauge3);
+
+      function resize() {
+        var gWidth = Math.min(d3.select("#graph3").node().offsetWidth, 350);
+        gauge3.width(gWidth).innerRadius(gWidth / 4).outerRadius((gWidth / 4) + 40);
+        d3.select("#graph3").call(gauge3);
+      }
+
+      resize();
+      window.addEventListener("resize", resize);
+	  })
+
+	*/		   
+      <!-- var graph3 = d3.select("#graph3").append("svg") -->
+						<!-- .attr("width", width*0.60 + margin.left + margin.right + 5) -->
+						<!-- .attr("height", height + margin.top + margin.bottom + 20) -->
+						<!-- .append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")"); -->
+						
+						        <!-- graph3.append("text").attr("transform", "translate(" + 40 + " ," + 100 + ")") -->
+								<!-- .style("text-anchor", "middle").text("Objects Identified").style("font-size", "10px").style("font-family", "verdana").style("font-weight", "bold").style("fill", "IndianRed"); -->
+								
+        var graph4 = d3.select("#graph4").append("svg").attr("width", width*0.60 + margin.left + margin.right + 5).attr("height", height*2 + margin.top + margin.bottom + 20).append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		    
+			graph4.append("text").attr("transform", "translate(" + 40 + " ," + 100 + ")")
+			.style("text-anchor", "middle").text("Confidence level").style("font-size", "10px").style("font-family", "verdana").style("font-weight", "bold").style("fill", "IndianRed");
+			
+        var graph5 = d3.select("#graph5").append("svg").attr("width", width + margin.left + margin.right + 5).attr("height", height + margin.top + margin.bottom + 20).append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		    graph5.append("text").attr("transform", "translate(" + 40 + " ," + 100 + ")")
+			.style("text-anchor", "middle").text("Object description").style("font-size", "10px").style("font-family", "verdana").style("font-weight", "bold").style("fill", "IndianRed");
+			
+        var graph6 = d3.select("#graph6").append("svg").attr("width", width*0.60 + margin.left + margin.right + 5).attr("height", height*2 + margin.top + margin.bottom + 20).append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		    graph6.append("text").attr("transform", "translate(" + 40 + " ," + 100 + ")")
+			.style("text-anchor", "middle").text("Objects classification").style("font-size", "10px").style("font-family", "verdana").style("font-weight", "bold").style("fill", "IndianRed");
+			
+
+</script>
+
+<script>
+var dAllos =  [{d: "Male", RC: 120 }, {d: "Female", RC: 55 }, {d: "Cat", RC: 45 }, {d: "Cars", RC: 20 }];
+
+var dAllDistance = [{d: "Sep 2", RC:967125.44}, {d: "Sep 3", RC:1027116.14}, {d: "Sep 4", RC:1013573.61}, {d: "Sep 5", RC:992228.28}, {d: "Sep 6", RC:1063468.95}, {d: "Sep 7", RC:1016211.83}, {d: "Sep 8", RC:934539.02}, {d: "Sep 9", RC:1111474.1}, {d: "Sep 10", RC:958916.56}, {d: "Sep 11", RC:960890.26}, {d: "Sep 12", RC:966164.35}, {d: "Sep 13", RC:1042840.84}, {d: "Sep 14", RC:968699.58}, {d: "Sep 15", RC:903196.11}, {d: "Sep 16", RC:1044283.53}, {d: "Sep 17", RC:1038048.03}, {d: "Sep 18", RC:1038328.34}, {d: "Sep 19", RC:1022444.51}, {d: "Sep 20", RC:1080798.72}, {d: "Sep 21", RC:1028875.63}, {d: "Sep 22", RC:947339.37}, {d: "Sep 23", RC:1088850.58}, {d: "Sep 24", RC:1019337.57}, {d: "Sep 25", RC:996982.01}, {d: "Sep 26", RC:989580.75}, {d: "Sep 27", RC:1045595.95}, {d: "Sep 28", RC:972061.59}, {d: "Sep 29", RC:1026836}, {d: "Sep 30", RC:999472.81}, {d: "Oct 1", RC:948325.88}, {d: "Oct 2", RC:928747.36}];
+	
+  function type(d) {
+            d.RC = +d.RC;
+            return d;
+        };
+		
+ function choosedistance() {return dAllET;};
+
+graph4.select(".y.axis").remove();
+            graph4.select(".x.axis").remove();
+            graph4.selectAll(".bar").remove();
+            graph4.selectAll("text").remove();
+            x.domain(choosedistance().map(function(d) {
+                return d.d;
+            }));
+            y.domain([0, d3.max(choosedistance(), function(d) {
+                return (d.RC * 1.25);
+            })]);
+            graph4.append("g").attr("class", "x axis").attr("transform", "translate(0," + height + ")").call(xAxis);
+            graph4.selectAll("text").style("text-anchor", "end").attr("dx", "-.8em").attr("dy", ".15em").attr("transform", "rotate(-55)");
+            graph4.append("text").attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom) + ")").style("font-size", "12px").style("font-weight", "bold").style("text-anchor", "middle").style('fill', 'darkkhaki').text('Date');
+            graph4.append("g").attr("class", "y axis").call(yAxis);
+            graph4.append("text").attr("transform", "rotate(-90)").attr("y", 0 - margin.left).attr("x", 0 - (height / 2)).attr("dy", "1em").style("font-size", "12px").style("font-weight", "bold").style('fill', 'darkkhaki').style("text-anchor", "top").text("Miles");
+            graph4.selectAll(".bar").data(choosedistance()).enter().append("rect").attr("class", "bar").attr("fill", ci).attr("x", function(d) {
+                return x(d.d);
+            }).attr("width", x.bandwidth()).attr("y", function(d) {
+                return y(d.RC);
+            }).attr("height", function(d) {
+                return height - y(d.RC);});
+            graph4.append("text").attr("x", (width / 2)).attr("y", "275").attr("text-anchor", "middle").style("font-size", "15px").style("font-weight", "bold").style('fill', 'blanchedalmond').text("Confidence Level");
+
+function chooseos() { return dAllos; };
+					 
+					 
+
+graph6.select("pie").remove(); 
+   graph6.select("path").remove(); 
+   graph6.selectAll(".piearc").remove(); 
+   graph6.selectAll("text").remove(); 
+   
+	//var color = d3.scaleOrdinal()
+    //.range(["#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+	
+	var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+	var pie = d3.pie().value(function(d) { return d.RC; }).sort(null) ; 
+    var pieradius = (height + margin.top)/1.25;
+	var piearc = d3.arc()
+				.outerRadius(pieradius)
+				.innerRadius(0);
+	var g = graph6.selectAll(".piearc")
+					.data(pie(chooseos())) 
+					.enter().append("g") 
+					.attr("class", "piearc"); 
+	g.append("path") 
+	.attr("d", piearc) 
+	.attr("fill", function(d) { return color(d.data.d)});
+	g.append("text").attr("x", 10)
+	.attr("y", -135)
+	.attr("text-anchor", "middle")
+	.style("font-size", "15px")
+	.style("font-weight", "normal")
+	.style("font-family", "calibri")
+	.style('fill', 'blanchedalmond').text("Objects Type");
+	// Add a legendLabel to each arc slice...
+    g.append("text")
+        .attr("transform", function(d) {
+            var c = arc.centroid(d);
+            return "translate(" + c[0]*2.5 +"," + c[1]*2.5 + ")";
+        })
+        .attr("dy", ".35em")
+	.attr("text-anchor", "middle")
+	.style("font-size", "10px")
+	.style("font-weight", "bold")
+	.style('fill', 'darkkhaki')
+    .text(function(d) { return (d.data.d ); });
+
+    // Add a RC value to the larger arcs, translated to the arc centroid and rotated.
+    g.filter(function(d) { return d.endAngle - d.startAngle > .2; }).append("text")
+      .attr("dy", ".35em")
+      .attr("text-anchor", "middle")
+      //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")rotate(" + angle(d) + ")"; })
+      .attr("transform", function(d) { //set the label's origin to the center of the arc
+        //we have to make sure to set these before calling arc.centroid
+        d.outerRadius = pieradius; // Set Outer Coordinate
+        d.innerRadius = pieradius/2; // Set Inner Coordinate
+        return "translate(" + arc.centroid(d) + ")";
+      })
+      .style("font", "12px Arial")
+      .text(function(d) { return d.data.RC; });
+
+    // Computes the angle of an arc, converting from radians to degrees.
+    function angle(d) {
+      var a = (d.startAngle + d.endAngle) * 90 / Math.PI - 90;
+      return a > 90 ? a - 180 : a;
+    }
+	
+
+</script>
+
+<!--<script type="text/javascript" src="http://yourjavascript.com/1869317241/interactivevisualizations.js"></script>-->
+
+</script></html>
